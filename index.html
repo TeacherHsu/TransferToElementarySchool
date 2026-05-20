@@ -776,22 +776,56 @@
     }
 
     function speak(text) {
+      stopSpeak();
       speakAsync(text);
+    }
+
+    function getSpeechTimeout(text) {
+      const cleanLength = String(text || "").replace(/\s/g, "").length;
+      // Chrome / Edge 的 Web Speech API 偶爾不觸發 onend，
+      // 所以用估算時間當保險，避免教材卡在「正在唸讀」。
+      return Math.min(Math.max(cleanLength * 190 + 1200, 2200), 10000);
     }
 
     function speakAsync(text) {
       return new Promise(resolve => {
-        if (!soundOn || !("speechSynthesis" in window)) {
+        if (!soundOn || !("speechSynthesis" in window) || !text) {
           resolve();
           return;
         }
-        window.speechSynthesis.cancel();
+
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "zh-TW";
         utterance.rate = 1;
         utterance.pitch = 1.08;
-        utterance.onend = resolve;
-        utterance.onerror = resolve;
+        utterance.volume = 1;
+
+        let finished = false;
+        let timeoutId = null;
+        let keepAliveId = null;
+
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timeoutId);
+          clearInterval(keepAliveId);
+          resolve();
+        };
+
+        utterance.onend = finish;
+        utterance.onerror = finish;
+
+        timeoutId = setTimeout(() => {
+          // 保險機制：語音事件卡住時，中止本段並繼續下一步。
+          try { window.speechSynthesis.cancel(); } catch (e) {}
+          finish();
+        }, getSpeechTimeout(text));
+
+        keepAliveId = setInterval(() => {
+          // Chromium 系瀏覽器長句或切換焦點時偶爾會暫停 speechSynthesis。
+          try { window.speechSynthesis.resume(); } catch (e) {}
+        }, 900);
+
         window.speechSynthesis.speak(utterance);
       });
     }
@@ -938,49 +972,62 @@
     async function autoReadMission() {
       const token = ++autoReadToken;
       const m = missions[currentIndex];
-      const optionLabels = ["選項一", "選項二", "選項三", "選項四"];
+
+      if ("speechSynthesis" in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        try { window.speechSynthesis.resume(); } catch (e) {}
+      }
+
       setOptionsLocked(true);
       clearReadingHighlight();
       el.listenStatus.textContent = "正在唸題目，先用耳朵聽。";
 
+      // 最後一道保險：就算瀏覽器語音 API 沒回報結束，也不讓學生卡在不能作答。
+      const failSafeUnlock = setTimeout(() => {
+        if (token !== autoReadToken || answered) return;
+        clearReadingHighlight();
+        setOptionsLocked(false);
+        el.listenStatus.textContent = "語音可能暫停了，現在也可以先選答案。";
+      }, 24000);
+
+      const stillCurrent = () => token === autoReadToken && !answered;
+
+      await pause(120);
+      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+
       await speakAsync(`第${currentIndex + 1}關。`);
-      if (token !== autoReadToken) return;
-      await pause(250);
-      if (token !== autoReadToken) return;
+      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+      await pause(220);
+      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
 
       await speakAsync("請聽題目。");
-      if (token !== autoReadToken) return;
-      await pause(300);
-      if (token !== autoReadToken) return;
+      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+      await pause(260);
+      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
 
       await speakAsync(m.title);
-      if (token !== autoReadToken) return;
-      await pause(450);
-      if (token !== autoReadToken) return;
+      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+      await pause(420);
+      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
 
       for (let i = 0; i < currentOptions.length; i++) {
         const btn = el.options.children[i];
         if (!btn) continue;
-        const label = optionLabels[i] || `選項${i + 1}`;
         clearReadingHighlight();
         btn.classList.add("reading");
-        el.listenStatus.textContent = `正在唸${label}：${currentOptions[i].text}`;
-
-        await speakAsync(`${label}。`);
-        if (token !== autoReadToken) return;
-        await pause(250);
-        if (token !== autoReadToken) return;
+        el.listenStatus.textContent = `正在唸發亮的選項：${currentOptions[i].text}`;
 
         await speakAsync(`${currentOptions[i].text}。${currentOptions[i].sub}`);
-        if (token !== autoReadToken) return;
-        await pause(420);
-        if (token !== autoReadToken) return;
+        if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+        await pause(520);
+        if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
       }
 
+      clearTimeout(failSafeUnlock);
       clearReadingHighlight();
       setOptionsLocked(false);
       el.listenStatus.textContent = "題目和選項都唸完了，現在可以選答案。";
-      await speakAsync("現在可以選答案。");
+      speakAsync("現在可以選答案。");
     }
 
     function getBadgeText(index) {
