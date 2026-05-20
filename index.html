@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>小一新鮮人冒險去｜入小一轉銜互動教材</title>
+  <style>
+    :root {
+      --paper: #fff8e8;
+      --card: #ffffff;
+      --ink: #243145;
+      --muted: #64748b;
+      --line: #334155;
+      --yellow: #fde68a;
+      --yellow-strong: #facc15;
+      --blue: #bae6fd;
+      --green: #bbf7d0;
+      --red: #fecaca;
+      --pink: #fbcfe8;
+      --purple: #ddd6fe;
+      --shadow: rgba(36,49,69,.18);
+      --focus: #2563eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(186,230,253,.55), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(251,207,232,.45), transparent 38%),
+        var(--paper);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      width: min(960px, 100%);
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .skip-link {
+      position: absolute;
+      left: -999px;
+      top: 8px;
+      background: var(--ink);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 10px;
+      z-index: 1000;
+    }
+
+    .skip-link:focus { left: 8px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      letter-spacing: .03em;
+    }
+
+    .brand-badge {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 3px solid var(--line);
+      border-radius: 16px;
+      background: white;
+      box-shadow: 4px 4px 0 var(--shadow);
+      font-size: 1.4rem;
+    }
+
+    .tool-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .panel {
+      background: rgba(255,255,255,.92);
+      border: 4px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 8px 8px 0 var(--shadow);
+      padding: clamp(18px, 4vw, 38px);
+    }
+
+    .center { text-align: center; }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      font-size: clamp(2.2rem, 8vw, 4.8rem);
+      line-height: 1.05;
+      margin-bottom: 12px;
+      font-weight: 1000;
+    }
+
+    h2 {
+      font-size: clamp(1.7rem, 5.5vw, 3rem);
+      line-height: 1.2;
+      font-weight: 950;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: clamp(1.25rem, 3.5vw, 1.65rem);
+      margin-bottom: 8px;
+    }
+
+    .lead {
+      font-size: clamp(1.15rem, 3.8vw, 1.65rem);
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+
+    .hero-emoji {
+      font-size: clamp(4rem, 16vw, 8rem);
+      margin: 10px 0 12px;
+      filter: drop-shadow(0 6px 0 rgba(0,0,0,.08));
+    }
+
+    .btn {
+      border: 3px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      color: var(--ink);
+      box-shadow: 4px 4px 0 var(--shadow);
+      cursor: pointer;
+      font-weight: 900;
+      padding: 12px 16px;
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+      min-height: 48px;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 1px 1px 0 var(--shadow);
+    }
+
+    .btn:focus-visible,
+    .option-card:focus-visible {
+      outline: 4px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .btn-primary {
+      width: min(520px, 100%);
+      background: var(--yellow);
+      font-size: clamp(1.35rem, 5vw, 2.25rem);
+      padding: 20px 22px;
+    }
+
+    .btn-blue { background: var(--blue); }
+    .btn-green { background: var(--green); }
+    .btn-pink { background: var(--pink); }
+    .btn-purple { background: var(--purple); }
+    .btn-small {
+      font-size: .95rem;
+      padding: 9px 12px;
+      border-radius: 16px;
+      min-height: 42px;
+    }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 26px 0;
+    }
+
+    .intro-card {
+      background: white;
+      border: 3px dashed #94a3b8;
+      border-radius: 22px;
+      padding: 16px 10px;
+      min-height: 132px;
+      display: grid;
+      place-items: center;
+      gap: 4px;
+    }
+
+    .intro-card .icon { font-size: 2.4rem; }
+    .intro-card b { font-size: 1.05rem; }
+
+    .game-head {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 3px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 14px;
+      box-shadow: 3px 3px 0 var(--shadow);
+      font-weight: 900;
+    }
+
+    .progress-wrap {
+      width: 100%;
+      height: 24px;
+      background: white;
+      border: 3px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: 3px 3px 0 var(--shadow);
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        45deg,
+        var(--yellow),
+        var(--yellow) 12px,
+        #fef3c7 12px,
+        #fef3c7 24px
+      );
+      border-right: 3px solid var(--line);
+      transition: width .35s ease;
+    }
+
+    .scenario {
+      display: grid;
+      grid-template-columns: minmax(100px, 170px) 1fr;
+      align-items: center;
+      gap: clamp(14px, 3vw, 24px);
+      margin-bottom: 20px;
+    }
+
+    .scene-emoji {
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(160deg, #fff, #fef3c7);
+      border: 4px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 5px 5px 0 var(--shadow);
+      font-size: clamp(4.2rem, 14vw, 7.5rem);
+    }
+
+    .question-card {
+      background: white;
+      border: 4px solid var(--line);
+      border-radius: 28px;
+      padding: clamp(18px, 4vw, 30px);
+      box-shadow: 5px 5px 0 var(--shadow);
+      position: relative;
+    }
+
+    .question-card .hint {
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .question-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .option-card {
+      border: 4px solid var(--line);
+      border-radius: 28px;
+      background: white;
+      color: var(--ink);
+      min-height: 182px;
+      padding: 18px;
+      cursor: pointer;
+      box-shadow: 6px 6px 0 var(--shadow);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      text-align: left;
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .option-card:hover { transform: translateY(-2px); }
+    .option-card:active {
+      transform: translateY(4px);
+      box-shadow: 2px 2px 0 var(--shadow);
+    }
+
+    .option-emoji {
+      font-size: clamp(2.8rem, 9vw, 4.2rem);
+      line-height: 1;
+    }
+
+    .option-text {
+      font-size: clamp(1.35rem, 4.8vw, 2.1rem);
+      font-weight: 950;
+      line-height: 1.2;
+    }
+
+    .option-sub {
+      color: var(--muted);
+      font-size: .95rem;
+      font-weight: 800;
+    }
+
+    .option-card.correct {
+      background: var(--green);
+      animation: pop .34s ease both;
+    }
+
+    .option-card.wrong {
+      background: var(--red);
+      animation: shake .24s ease both;
+    }
+
+    .option-card.disabled {
+      pointer-events: none;
+      opacity: .82;
+    }
+
+    .feedback {
+      margin-top: 18px;
+      display: none;
+      border: 4px solid var(--line);
+      border-radius: 28px;
+      padding: 18px;
+      background: white;
+      box-shadow: 5px 5px 0 var(--shadow);
+    }
+
+    .feedback.show { display: block; }
+
+    .feedback.good { background: var(--green); }
+    .feedback.try { background: var(--red); }
+
+    .feedback-title {
+      font-size: clamp(1.45rem, 5vw, 2.1rem);
+      font-weight: 1000;
+      margin-bottom: 6px;
+    }
+
+    .feedback-text {
+      font-size: clamp(1.05rem, 3.8vw, 1.35rem);
+      font-weight: 760;
+      margin-bottom: 14px;
+    }
+
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .badge {
+      background: white;
+      border: 3px solid var(--line);
+      border-radius: 20px;
+      padding: 10px 6px;
+      box-shadow: 3px 3px 0 var(--shadow);
+      font-weight: 900;
+      text-align: center;
+      min-height: 86px;
+      display: grid;
+      place-items: center;
+    }
+
+    .badge span {
+      display: block;
+      font-size: 2rem;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .summary-list {
+      display: grid;
+      gap: 10px;
+      margin: 20px 0;
+      text-align: left;
+    }
+
+    .summary-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: white;
+      border: 3px solid #cbd5e1;
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-weight: 850;
+    }
+
+    .summary-item .num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--yellow);
+      border: 2px solid var(--line);
+      flex: 0 0 auto;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(.98); }
+      60% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    @media (max-width: 720px) {
+      .app { padding: 12px; }
+      .topbar { align-items: flex-start; }
+      .brand-text { font-size: .95rem; }
+      .intro-grid, .options, .scenario, .badge-grid {
+        grid-template-columns: 1fr;
+      }
+      .scene-emoji {
+        min-height: 110px;
+      }
+      .option-card {
+        min-height: 142px;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        align-items: center;
+      }
+      .option-sub { grid-column: 1 / -1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    body.high-contrast {
+      --paper: #ffffff;
+      --card: #ffffff;
+      --ink: #000000;
+      --muted: #1f2937;
+      --line: #000000;
+      --yellow: #fff176;
+      --blue: #b3e5fc;
+      --green: #b9f6ca;
+      --red: #ff8a80;
+      --pink: #f8bbd0;
+      --purple: #d1c4e9;
+      --shadow: rgba(0,0,0,.35);
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">跳到主要內容</a>
+
+  <main id="main" class="app" aria-live="polite">
+    <div class="topbar" aria-label="教材工具列">
+      <div class="brand">
+        <div class="brand-badge" aria-hidden="true">🎒</div>
+        <div class="brand-text">入小一轉銜互動教材</div>
+      </div>
+      <div class="tool-row">
+        <button id="soundToggle" class="btn btn-small btn-blue" type="button" aria-pressed="true">🔊 語音開</button>
+        <button id="contrastToggle" class="btn btn-small" type="button" aria-pressed="false">高對比</button>
+      </div>
+    </div>
+
+    <section id="startScreen" class="screen active">
+      <div class="panel center">
+        <div class="hero-emoji" aria-hidden="true">🏫✨</div>
+        <h1>小一新鮮人<br>冒險去！</h1>
+        <p class="lead">一起練習上小學會遇到的事情。<br>聽一聽、選一選，答錯也可以再試一次。</p>
+
+        <div class="intro-grid" aria-label="學習重點">
+          <div class="intro-card">
+            <div class="icon" aria-hidden="true">🙋</div>
+            <b>會求助</b>
+            <small>不會時找大人</small>
+          </div>
+          <div class="intro-card">
+            <div class="icon" aria-hidden="true">🚻</div>
+            <b>會照顧自己</b>
+            <small>喝水、廁所、整理</small>
+          </div>
+          <div class="intro-card">
+            <div class="icon" aria-hidden="true">🤝</div>
+            <b>會一起玩</b>
+            <small>輪流、排隊、說好話</small>
+          </div>
+        </div>
+
+        <button id="startBtn" class="btn btn-primary" type="button">開始冒險 ▶</button>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="game-head">
+        <div class="status-row">
+          <div id="levelPill" class="pill">第 1 關</div>
+          <div id="starsPill" class="pill" aria-label="目前星星數">⭐ 0</div>
+        </div>
+        <div class="progress-wrap" aria-hidden="true">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+      </div>
+
+      <div class="scenario">
+        <div id="sceneEmoji" class="scene-emoji" aria-hidden="true">🏫</div>
+        <article class="question-card">
+          <div id="questionHint" class="hint">先聽題目，再選一個最適合的做法。</div>
+          <h2 id="questionText">題目</h2>
+          <div class="question-actions">
+            <button id="readQuestionBtn" class="btn btn-small btn-blue" type="button">🔊 聽題目</button>
+            <button id="readHintBtn" class="btn btn-small btn-purple" type="button">💡 聽小提示</button>
+          </div>
+        </article>
+      </div>
+
+      <div id="options" class="options" role="group" aria-label="答案選項"></div>
+
+      <section id="feedback" class="feedback" aria-live="assertive">
+        <div id="feedbackTitle" class="feedback-title"></div>
+        <p id="feedbackText" class="feedback-text"></p>
+        <button id="nextBtn" class="btn btn-green" type="button">下一關 ➜</button>
+      </section>
+    </section>
+
+    <section id="endScreen" class="screen">
+      <div class="panel center">
+        <div class="hero-emoji" aria-hidden="true">🎉🏅</div>
+        <h1>小一任務<br>完成！</h1>
+        <p class="lead">你已經練習了小一生活常用的好方法。</p>
+
+        <div id="badgeGrid" class="badge-grid" aria-label="完成徽章"></div>
+
+        <div class="summary-list" aria-label="小一安心口訣">
+          <div class="summary-item"><span class="num">1</span>遇到困難，我可以找老師或家人幫忙。</div>
+          <div class="summary-item"><span class="num">2</span>下課先喝水、上廁所，再去玩。</div>
+          <div class="summary-item"><span class="num">3</span>上課先聽老師說，想說話可以舉手。</div>
+          <div class="summary-item"><span class="num">4</span>和同學一起玩，要輪流、排隊、好好說。</div>
+        </div>
+
+        <div class="tool-row" style="justify-content:center">
+          <button id="restartBtn" class="btn btn-primary" type="button">再玩一次</button>
+          <button id="reviewBtn" class="btn btn-blue" type="button">複習小一口訣 🔊</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const missions = [
+      {
+        scene: "👋🏫",
+        title: "早上到學校，看到老師，可以怎麼做？",
+        hint: "小一生可以用眼睛看老師，嘴巴說招呼。",
+        correctFeedback: "很棒！看到老師說「老師好」，是有禮貌的小一生。",
+        retryFeedback: "再想想：早上到學校，可以先跟老師打招呼。",
+        options: [
+          { text: "看老師，說老師好", emoji: "🙋‍♀️", sub: "有禮貌的招呼", correct: true },
+          { text: "低頭跑走，不說話", emoji: "🏃", sub: "老師不知道你來了", correct: false }
+        ]
+      },
+      {
+        scene: "🎒🪑",
+        title: "進教室後，書包應該放哪裡？",
+        hint: "書包有自己的家，放好才不會絆倒人。",
+        correctFeedback: "答對了！書包放在指定位置，教室會更安全。",
+        retryFeedback: "再試一次：書包不要放走道，才不會讓人跌倒。",
+        options: [
+          { text: "放到老師指定的位置", emoji: "🎒", sub: "整齊又安全", correct: true },
+          { text: "丟在走道中間", emoji: "🌀", sub: "可能會絆倒同學", correct: false }
+        ]
+      },
+      {
+        scene: "📚👂",
+        title: "老師正在說話，我可以怎麼做？",
+        hint: "上課時，眼睛看、耳朵聽，想說話可以舉手。",
+        correctFeedback: "做得好！先聽老師說，想回答再舉手。",
+        retryFeedback: "再想想：老師說話時，先把耳朵打開。",
+        options: [
+          { text: "看老師，安靜聽", emoji: "👀", sub: "知道接下來要做什麼", correct: true },
+          { text: "一直跟旁邊聊天", emoji: "🗣️", sub: "會聽不到重要事情", correct: false }
+        ]
+      },
+      {
+        scene: "🙋‍♂️❓",
+        title: "我不會做學習單，怎麼辦？",
+        hint: "不會不是壞事。小一生可以練習說：老師，請幫我。",
+        correctFeedback: "很好！遇到困難會求助，是很重要的能力。",
+        retryFeedback: "再試試：不會時，可以用說的或舉手找老師。",
+        options: [
+          { text: "舉手說：請幫我", emoji: "🙋", sub: "用好方法求助", correct: true },
+          { text: "把紙揉掉或大哭", emoji: "😢", sub: "別人比較難知道怎麼幫你", correct: false }
+        ]
+      },
+      {
+        scene: "🔔🚻",
+        title: "下課鐘響了，先做哪一件事比較好？",
+        hint: "下課有三件重要事：喝水、廁所、準備下一節。",
+        correctFeedback: "答對！先照顧身體，再開心玩。",
+        retryFeedback: "再想想：先喝水、上廁所，下一節課會更舒服。",
+        options: [
+          { text: "先喝水、上廁所", emoji: "💧", sub: "照顧自己的身體", correct: true },
+          { text: "立刻衝去玩，什麼都不管", emoji: "⚡", sub: "可能上課才想上廁所", correct: false }
+        ]
+      },
+      {
+        scene: "🧸🤝",
+        title: "我想玩同學手上的玩具，可以怎麼說？",
+        hint: "想玩別人的東西，要先問，不能直接拿。",
+        correctFeedback: "很棒！先問一問，大家比較容易一起玩。",
+        retryFeedback: "再試一次：想玩時，用嘴巴問，不用手搶。",
+        options: [
+          { text: "可以借我玩嗎？", emoji: "🤲", sub: "先問，再等待", correct: true },
+          { text: "直接搶過來", emoji: "😠", sub: "同學可能會難過", correct: false }
+        ]
+      },
+      {
+        scene: "🚶‍♀️🚶‍♂️",
+        title: "全班要去操場，走路時我應該怎麼做？",
+        hint: "跟著隊伍慢慢走，身體比較安全。",
+        correctFeedback: "答對！排隊慢慢走，是安全的小一生。",
+        retryFeedback: "再想想：移動時跟著隊伍，不亂跑。",
+        options: [
+          { text: "跟著隊伍慢慢走", emoji: "🚶", sub: "安全到達目的地", correct: true },
+          { text: "自己跑去別的地方", emoji: "🏃‍♂️", sub: "老師會找不到你", correct: false }
+        ]
+      },
+      {
+        scene: "😟🧑‍🏫",
+        title: "如果我肚子痛、想媽媽，或心裡很緊張，可以怎麼辦？",
+        hint: "身體不舒服、心裡不舒服，都可以告訴大人。",
+        correctFeedback: "太好了！會說出需要，是照顧自己的好方法。",
+        retryFeedback: "再試試：不舒服或緊張時，可以找老師說。",
+        options: [
+          { text: "跟老師說：我需要幫忙", emoji: "🧑‍🏫", sub: "大人可以陪你想辦法", correct: true },
+          { text: "一直忍住，什麼都不說", emoji: "🤐", sub: "大人可能不知道你不舒服", correct: false }
+        ]
+      }
+    ];
+
+    let currentIndex = 0;
+    let stars = 0;
+    let soundOn = true;
+    let answered = false;
+    const earnedBadges = [];
+
+    const el = {
+      startScreen: document.getElementById("startScreen"),
+      gameScreen: document.getElementById("gameScreen"),
+      endScreen: document.getElementById("endScreen"),
+      startBtn: document.getElementById("startBtn"),
+      restartBtn: document.getElementById("restartBtn"),
+      reviewBtn: document.getElementById("reviewBtn"),
+      soundToggle: document.getElementById("soundToggle"),
+      contrastToggle: document.getElementById("contrastToggle"),
+      levelPill: document.getElementById("levelPill"),
+      starsPill: document.getElementById("starsPill"),
+      progressBar: document.getElementById("progressBar"),
+      sceneEmoji: document.getElementById("sceneEmoji"),
+      questionText: document.getElementById("questionText"),
+      questionHint: document.getElementById("questionHint"),
+      readQuestionBtn: document.getElementById("readQuestionBtn"),
+      readHintBtn: document.getElementById("readHintBtn"),
+      options: document.getElementById("options"),
+      feedback: document.getElementById("feedback"),
+      feedbackTitle: document.getElementById("feedbackTitle"),
+      feedbackText: document.getElementById("feedbackText"),
+      nextBtn: document.getElementById("nextBtn"),
+      badgeGrid: document.getElementById("badgeGrid")
+    };
+
+    function showScreen(screen) {
+      [el.startScreen, el.gameScreen, el.endScreen].forEach(s => s.classList.remove("active"));
+      screen.classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function speak(text) {
+      if (!soundOn || !("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-TW";
+      utterance.rate = 0.82;
+      utterance.pitch = 1.05;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function stopSpeak() {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    }
+
+    function startGame() {
+      currentIndex = 0;
+      stars = 0;
+      answered = false;
+      earnedBadges.length = 0;
+      showScreen(el.gameScreen);
+      renderMission();
+      setTimeout(() => speak(`第1關。${missions[0].title}`), 280);
+    }
+
+    function renderMission() {
+      answered = false;
+      const m = missions[currentIndex];
+
+      el.levelPill.textContent = `第 ${currentIndex + 1} / ${missions.length} 關`;
+      el.starsPill.textContent = `⭐ ${stars}`;
+      el.progressBar.style.width = `${(currentIndex / missions.length) * 100}%`;
+      el.sceneEmoji.textContent = m.scene;
+      el.questionText.textContent = m.title;
+      el.questionHint.textContent = "先聽題目，再選一個最適合的做法。";
+      el.feedback.className = "feedback";
+      el.feedbackTitle.textContent = "";
+      el.feedbackText.textContent = "";
+      el.nextBtn.textContent = currentIndex === missions.length - 1 ? "看我的徽章 🏅" : "下一關 ➜";
+      el.options.innerHTML = "";
+
+      m.options.forEach((option, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "option-card";
+        btn.setAttribute("aria-label", option.text + "。" + option.sub);
+        btn.innerHTML = `
+          <div class="option-emoji" aria-hidden="true">${option.emoji}</div>
+          <div class="option-text">${option.text}</div>
+          <div class="option-sub">🔊 點選會唸出來｜${option.sub}</div>
+        `;
+        btn.addEventListener("click", () => chooseOption(idx, btn));
+        el.options.appendChild(btn);
+      });
+    }
+
+    function chooseOption(idx, btn) {
+      const m = missions[currentIndex];
+      const option = m.options[idx];
+      speak(option.text);
+
+      if (answered) return;
+
+      if (option.correct) {
+        answered = true;
+        stars += 1;
+        earnedBadges.push({ icon: option.emoji, text: getBadgeText(currentIndex) });
+        el.starsPill.textContent = `⭐ ${stars}`;
+        btn.classList.add("correct");
+        Array.from(el.options.children).forEach(child => child.classList.add("disabled"));
+        showFeedback(true, "答對了！", m.correctFeedback);
+        speak(`答對了！${m.correctFeedback}`);
+      } else {
+        btn.classList.add("wrong");
+        showFeedback(false, "再試一次", m.retryFeedback);
+        speak(m.retryFeedback);
+        setTimeout(() => btn.classList.remove("wrong"), 650);
+      }
+    }
+
+    function showFeedback(isGood, title, text) {
+      el.feedback.className = `feedback show ${isGood ? "good" : "try"}`;
+      el.feedbackTitle.textContent = title;
+      el.feedbackText.textContent = text;
+      el.feedback.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      el.nextBtn.style.display = isGood ? "inline-block" : "none";
+    }
+
+    function nextMission() {
+      if (!answered) return;
+      currentIndex += 1;
+      if (currentIndex < missions.length) {
+        renderMission();
+        setTimeout(() => speak(`第${currentIndex + 1}關。${missions[currentIndex].title}`), 220);
+      } else {
+        finishGame();
+      }
+    }
+
+    function finishGame() {
+      stopSpeak();
+      el.progressBar.style.width = "100%";
+      renderBadges();
+      showScreen(el.endScreen);
+      speak("恭喜你，小一任務完成！你學會了求助、照顧自己、聽老師說話，還有和同學一起玩。");
+    }
+
+    function renderBadges() {
+      el.badgeGrid.innerHTML = "";
+      earnedBadges.forEach(badge => {
+        const div = document.createElement("div");
+        div.className = "badge";
+        div.innerHTML = `<span aria-hidden="true">${badge.icon}</span>${badge.text}`;
+        el.badgeGrid.appendChild(div);
+      });
+    }
+
+    function getBadgeText(index) {
+      const names = ["會問好", "會整理", "會聽課", "會求助", "會照顧", "會輪流", "會排隊", "會表達"];
+      return names[index] || "小一高手";
+    }
+
+    function reviewRules() {
+      speak("小一安心口訣。遇到困難，我可以找老師或家人幫忙。下課先喝水，上廁所，再去玩。上課先聽老師說，想說話可以舉手。和同學一起玩，要輪流，排隊，好好說。");
+    }
+
+    el.startBtn.addEventListener("click", startGame);
+    el.restartBtn.addEventListener("click", startGame);
+    el.nextBtn.addEventListener("click", nextMission);
+    el.reviewBtn.addEventListener("click", reviewRules);
+
+    el.readQuestionBtn.addEventListener("click", () => {
+      const m = missions[currentIndex];
+      speak(m.title);
+    });
+
+    el.readHintBtn.addEventListener("click", () => {
+      const m = missions[currentIndex];
+      speak(m.hint);
+      el.questionHint.textContent = m.hint;
+    });
+
+    el.soundToggle.addEventListener("click", () => {
+      soundOn = !soundOn;
+      el.soundToggle.textContent = soundOn ? "🔊 語音開" : "🔇 語音關";
+      el.soundToggle.setAttribute("aria-pressed", String(soundOn));
+      if (!soundOn) stopSpeak();
+      else speak("語音已開啟");
+    });
+
+    el.contrastToggle.addEventListener("click", () => {
+      const on = document.body.classList.toggle("high-contrast");
+      el.contrastToggle.setAttribute("aria-pressed", String(on));
+      el.contrastToggle.textContent = on ? "一般色彩" : "高對比";
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stopSpeak();
+    });
+  </script>
+</body>
+</html>
