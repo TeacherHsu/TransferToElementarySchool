@@ -788,12 +788,16 @@
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "zh-TW";
-        utterance.rate = 0.82;
-        utterance.pitch = 1.05;
+        utterance.rate = 1;
+        utterance.pitch = 1.08;
         utterance.onend = resolve;
         utterance.onerror = resolve;
         window.speechSynthesis.speak(utterance);
       });
+    }
+
+    function pause(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     function stopSpeak() {
@@ -934,26 +938,49 @@
     async function autoReadMission() {
       const token = ++autoReadToken;
       const m = missions[currentIndex];
+      const optionLabels = ["選項一", "選項二", "選項三", "選項四"];
       setOptionsLocked(true);
       clearReadingHighlight();
       el.listenStatus.textContent = "正在唸題目，先用耳朵聽。";
 
-      await speakAsync(`第${currentIndex + 1}關。${m.title}`);
+      await speakAsync(`第${currentIndex + 1}關。`);
+      if (token !== autoReadToken) return;
+      await pause(250);
+      if (token !== autoReadToken) return;
+
+      await speakAsync("請聽題目。");
+      if (token !== autoReadToken) return;
+      await pause(300);
+      if (token !== autoReadToken) return;
+
+      await speakAsync(m.title);
+      if (token !== autoReadToken) return;
+      await pause(450);
       if (token !== autoReadToken) return;
 
       for (let i = 0; i < currentOptions.length; i++) {
         const btn = el.options.children[i];
         if (!btn) continue;
+        const label = optionLabels[i] || `選項${i + 1}`;
         clearReadingHighlight();
         btn.classList.add("reading");
-        el.listenStatus.textContent = `正在唸第 ${i + 1} 個選項：${currentOptions[i].text}`;
-        await speakAsync(`選項${i + 1}。${currentOptions[i].text}。${currentOptions[i].sub}`);
+        el.listenStatus.textContent = `正在唸${label}：${currentOptions[i].text}`;
+
+        await speakAsync(`${label}。`);
+        if (token !== autoReadToken) return;
+        await pause(250);
+        if (token !== autoReadToken) return;
+
+        await speakAsync(`${currentOptions[i].text}。${currentOptions[i].sub}`);
+        if (token !== autoReadToken) return;
+        await pause(420);
         if (token !== autoReadToken) return;
       }
 
       clearReadingHighlight();
       setOptionsLocked(false);
       el.listenStatus.textContent = "題目和選項都唸完了，現在可以選答案。";
+      await speakAsync("現在可以選答案。");
     }
 
     function getBadgeText(index) {
