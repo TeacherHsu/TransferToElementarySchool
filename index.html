@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>小一新鮮人冒險去｜入小一轉銜互動教材</title>
+  <title>小一新鮮人冒險去｜入小一轉銜互動教材 v6</title>
   <style>
     :root {
       --paper: #fff8e8;
@@ -777,7 +777,26 @@
 
     function speak(text) {
       stopSpeak();
-      speakAsync(text);
+      speakNow(text);
+    }
+
+    function speakNow(text) {
+      if (!soundOn || !("speechSynthesis" in window) || !text) return;
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+      try { window.speechSynthesis.resume(); } catch (e) {}
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-TW";
+      utterance.rate = 1;
+      utterance.pitch = 1.08;
+      utterance.volume = 1;
+      try { window.speechSynthesis.speak(utterance); } catch (e) {}
+    }
+
+    function getVisualReadDuration(text) {
+      const cleanLength = String(text || "").replace(/\s/g, "").length;
+      // 不再等待 Web Speech API 的 onend。
+      // 直接用文字長度估算朗讀與發光時間，避免 Chrome / Edge 卡在語音事件。
+      return Math.min(Math.max(cleanLength * 170 + 900, 1700), 6500);
     }
 
     function getSpeechTimeout(text) {
@@ -980,35 +999,22 @@
 
       setOptionsLocked(true);
       clearReadingHighlight();
-      el.listenStatus.textContent = "正在唸題目，先用耳朵聽。";
-
-      // 最後一道保險：就算瀏覽器語音 API 沒回報結束，也不讓學生卡在不能作答。
-      const failSafeUnlock = setTimeout(() => {
-        if (token !== autoReadToken || answered) return;
-        clearReadingHighlight();
-        setOptionsLocked(false);
-        el.listenStatus.textContent = "語音可能暫停了，現在也可以先選答案。";
-      }, 24000);
+      el.listenStatus.textContent = "請先用耳朵聽，聽完再選答案。";
 
       const stillCurrent = () => token === autoReadToken && !answered;
 
-      await pause(120);
-      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+      await pause(180);
+      if (!stillCurrent()) return;
 
-      await speakAsync(`第${currentIndex + 1}關。`);
-      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
-      await pause(220);
-      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+      el.listenStatus.textContent = "請聽題目。";
+      speakNow("請聽題目。");
+      await pause(900);
+      if (!stillCurrent()) return;
 
-      await speakAsync("請聽題目。");
-      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
-      await pause(260);
-      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
-
-      await speakAsync(m.title);
-      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
-      await pause(420);
-      if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+      el.listenStatus.textContent = "正在唸題目，先用耳朵聽。";
+      speakNow(m.title);
+      await pause(getVisualReadDuration(m.title) + 260);
+      if (!stillCurrent()) return;
 
       for (let i = 0; i < currentOptions.length; i++) {
         const btn = el.options.children[i];
@@ -1017,17 +1023,15 @@
         btn.classList.add("reading");
         el.listenStatus.textContent = `正在唸發亮的選項：${currentOptions[i].text}`;
 
-        await speakAsync(`${currentOptions[i].text}。${currentOptions[i].sub}`);
-        if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
-        await pause(520);
-        if (!stillCurrent()) { clearTimeout(failSafeUnlock); return; }
+        // 只唸選項主文字，不唸「選項一／選項二」，也不唸補充說明，降低聽覺負荷。
+        speakNow(currentOptions[i].text);
+        await pause(getVisualReadDuration(currentOptions[i].text) + 420);
+        if (!stillCurrent()) return;
       }
 
-      clearTimeout(failSafeUnlock);
       clearReadingHighlight();
       setOptionsLocked(false);
       el.listenStatus.textContent = "題目和選項都唸完了，現在可以選答案。";
-      speakAsync("現在可以選答案。");
     }
 
     function getBadgeText(index) {
